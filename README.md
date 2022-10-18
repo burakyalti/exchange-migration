@@ -3,7 +3,7 @@ Exchange 2013 to Exchange Online Hybrid Migration Step By Step
 
 Tanım: Exchange 2013 On Premise altyapısında barınan hesapların (mail, arşiv, contacts, todo, calender) Microsoft 365 (Exchange Online) sistemine migrate edilmesi.
 
-Önemli!!! Bu makale sadece bilgilendirme amaçlıdır. Lütfen migration işlemleri için microsoftun kendi sayfasındaki dökümanları referans alınız. İşlemlerden önce mevcut sunucunuzun sorunsuz bir yedeğinin olduğuna emin olunuz. Aşağıdaki işlemlerden dolayı meydana gelebilecek sorunlar sizin sorumluluğunuzdadır.
+Önemli!!! Bu makale sadece bilgilendirme amaçlıdır. Lütfen migration işlemleri için microsoftun kendi sayfasındaki dökümanları referans alınız. İşlemlerden önce mevcut sunucunuzun sorunsuz bir yedeğinin olduğuna emin olunuz. Aşağıdaki işlemlerden dolayı meydana gelebilecek sorunlar sizin sorumluluğunuzdadır. Microsoft 2000 den daha az mail kutusu olan sistemler için hybrid migration önermiyor. Bunun yerine cutover migration öneriyor. Fakat ben posta hesaplarının içeriği çok büyük olduğu için hybrid migraiton tercih ettim.
 
 Bu aşamadan sonra lokal sunucu: on premise, remote sunucu exo olarak adlandırılacaktır.
 
@@ -77,4 +77,71 @@ Full Hybrid Configuration ve Organization Configuration Transfer seçeneklerini 
 Exchange Classic Topology seçip kurulumu bitiriyoruz. 
 Kurulum sonunda bir hata vermediyse işin %80'i bitti demektir.
 
-6) EXO üzerine powercli ile bağlanma
+6) Aktarılacak domainlerde SMTP alias var mı?
+
+Örneğin siz user@domain.com için migration planlaması yapıyorsunuz. Fakat on premise üzerinde user@domain.com dışında user@domain.net şeklinde bir SMTP alias var ise 2 seçeneğiniz var, ya yeni domaini de microsoft admin center dan tanımlı alan adları listesine ekleyeceksiniz ya da on premise üzerinden bu aliasları sileceksiniz. Benim taşımamda bu aliaslar artık kullanılmadığı için silmeyi tercih ettim.
+
+get-mailbox | select -expand emailaddresses alias komutu ile email aliaslarını görebilirsiniz.
+
+On premise AD PowerShell de Start-ADSyncSyncCycle -PolicyType Delta komutunu çalıştırın ki bu değişiklikler azure ad üzerinde senkronize olsun. Ya da 20-30 dakika beklerseniz kendi kendine de senkronize olacaktır.
+
+Bu aşamadan sonra exchange on premise üzerinde pek bir işlem kalmadı.
+
+7) EXO üzerine powercli ile bağlanma
+
+PowerShell ile connect-exo.ps1 dosyasını çalıştırın ve exo kullanıcı adı ve şifrenizi girin.
+Get-MigrationEndpoint | Format-List Identity, RemoteServer komutu ile hybrid configuration ayarlarınızı teyit edin. 
+
+Aşağıdaki gibi bir çıktı aldıysanız, köprü kurulmuş demektir.
+
+Identity     : Hybrid Migration Endpoint - EWS (Default Web Site)
+RemoteServer : 7436112b-b224-4f99-8134-ba8ea4033946.resource.mailboxmigration.his.msappproxy.net
+
+Identity     : mail.domain.com
+RemoteServer : mail.domain.com
+
+7) Migrate işlemlerini 2 şekilde başlatabilirsiniz. Ya EXO Admin Center üzerinden ya da EXO'ye powershell ile bağlanıp komut satırı ile. 
+Ben ikisine de örnek vereceğim;
+
+- Migration Path
+Give migration batch a unique name: migration job için bir isim girin
+Select the mailbox migration path: Migration ton Exchange Online (EXO)
+
+- Migration Type
+Remote Move Migration
+
+- Set a migration endpoint: Hybrid Migration Endpoint - EWS (Default Web Site)
+
+- Add users
+Manually add users to migrate: Burada en küçük posta kutusu boyutuna sahip olan hesap ile denemelere başlayabilirsiniz. Benim önerim önce boş/yeni bir posta hesabı açıp onunla deneme yapmanız. Her şey yolunda ise gerçek kullanıcılarla devam edebiliriniz. Basitçe on premise üzerinde Get-Mailbox komutu ile mailbox boyutlarını görebilirsiniz. Eğer çoklu taşıma yapmak isterseniz csv dosyasına mail hesaplarını yazarak aynı anda birden fazla aktarım yapabilirsiniz. Fakat hesap çok fazla değil ise ben tek tek yapma taraftarıyım. Çünkü bir anda on premise sunucusuna yüklenirseniz, disk yavaşladığı için zaten işlemleri ya yavaş yapıyor ya da bazı işlemleri kuyrukta bekletiyor.
+
+- Configuration
+Target delivery domain: domain_adi.mail.onmicrosoft.com
+
+- Schedule batch migration
+Burada işlemi hemen başlatabilir ya da istediğiniz bir tarih/saat için planlayabilirsiniz.
+
+8) Migrate işlemlerinin durumunun takip edilmesi
+
+Burada iki farklı komut ile migration durumunu takip edebilirsiniz.
+
+Get-MoveRequest | Get-MoveRequestStatistics -> Bu işlemi % olarak gösteriyor.
+Get-MigrationUser | Get-MigrationUserStatistics -> Bu işlemi item bazında gösteriyor.
+
+Bonus:
+
+Get-MoveRequest –BatchName "burak" | Get-MoveRequestStatistics | ft DisplayName,StatusDetail,DataConsistencyScore,PercentComplete burada migration işlemine burak ismini verdiyseniz, sadece o kullanıcının migration durumunu görebilirsiniz.
+Get-MigrationUser | Get-MigrationUserStatistics | Where-Object {$_.Status -notlike "Completed"} burada durumu devam edenleri görebilirsiniz. PowerShell komutlarının sonu yok, bir çok varyasyona araştırarak ulaşabilirsiniz.
+
+9) Migration işleminin tamamlanması.
+
+Migration işlemi completed olduğunda, örneğin mailbox üzerinde 200k item var ise, bazen 3-4 item aktarılamıyor. Bu nedenme migration status approve skipped items'e düşüyor. Bu migrasyon işlemini manual tanımlamak için exo powershell de Set-MigrationUser -ApproveSkippedItems komutu ve arından Identity sorduğunda email adresini yazarak taşımayı tamamlayabiliriz.
+
+Taşıma tamamlandıktan sonra, Exchange On Premise üzerinde bu kullanıcı artık 0365 olarak gözükecek.
+
+
+
+
+
+
+
