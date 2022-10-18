@@ -3,7 +3,7 @@ Exchange 2013 to Exchange Online Hybrid Migration Step By Step
 
 Tanım: Exchange 2013 On Premise altyapısında barınan hesapların (mail, arşiv, contacts, todo, calender) Microsoft 365 (Exchange Online) sistemine migrate edilmesi.
 
-Önemli!!! Bu makale sadece bilgilendirme amaçlıdır. Lütfen migration işlemleri için microsoftun kendi sayfasındaki dökümanları referans alınız. İşlemlerden önce mevcut sunucunuzun sorunsuz bir yedeğinin olduğuna emin olunuz. Aşağıdaki işlemlerden dolayı meydana gelebilecek sorunlar sizin sorumluluğunuzdadır. Microsoft 2000 den daha az mail kutusu olan sistemler için hybrid migration önermiyor. Bunun yerine cutover migration öneriyor. Fakat ben posta hesaplarının içeriği çok büyük olduğu için hybrid migraiton tercih ettim.
+Önemli!!! Bu makale sadece bilgilendirme amaçlıdır. Lütfen migration işlemleri için microsoftun kendi sayfasındaki dökümanları referans alınız. İşlemlerden önce mevcut sunucunuzun sorunsuz bir yedeğinin olduğuna emin olunuz. Aşağıdaki işlemlerden dolayı meydana gelebilecek sorunlar sizin sorumluluğunuzdadır. Microsoft, 2000 den daha az mail hesabı olan sistemler için hybrid migration önermiyor. Bunun yerine cutover migration öneriyor. Fakat ben posta hesaplarının içeriği çok büyük olduğu için hybrid migraiton tercih ettim.
 
 Bu aşamadan sonra lokal sunucu: on premise, remote sunucu exo olarak adlandırılacaktır.
 
@@ -24,7 +24,7 @@ Burada elimden geldiğince fazla detay vererek anlatmaya çalışacağım.
 
 On Premise PowerShell bağlantısı: Windows üzerinde Exchange Management Shell'i bulup çalıştırın. Herhangi bir nedenle hata verir ve bağlanmazsa aşağıdaki komut ile bağlantı sağlayabilirsiniz.
 
-connect-exchangeserver -serverfqdn mail.sunucuadi.com -username Administrator@domain.com
+connect-exchangeserver -serverfqdn mail.domain.com -username Administrator@domain.com
 
 Hala bağlantı sağlayamıyor iseniz, PowerShell üzerinden bağlanmayı deneyin: https://learn.microsoft.com/en-us/powershell/exchange/connect-to-exchange-servers-using-remote-powershell?view=exchange-ps
 
@@ -37,6 +37,8 @@ Get-ExchangeServer | Format-Table Name, Edition, AdminDisplayVersion komutu ile 
 2) Exchange On Premise üzerinde 25 ve 443 portlarının firewallda açık olduğuna emin olun.
 
 3) Exchange On Premise üzerinde Content Indexing sağlıklı durumda mı?
+
+Eğer Content Indexing sağlılı değil ise, migration işlemi başlar ama asla sonlanmaz. Saatlerce boşuna beklersiniz.
 
 on premise'e exchange management shell ile bağlantı sağlayın
 
@@ -52,7 +54,7 @@ Get-MailboxDatabase "DB01" | Select EdbFilePath -> burada DB01 yazan yere kendi 
 
 Servisleri başlatın: Get-Service -Name "HostControllerService","MSExchangeFastSearch" | Start-Service
 
-Yukarıdaki komut ile servisleri başlattıktan sonra, index yeniden oluşmaya başlayacak. Bu veri boyutuna göre bir kaç saat sürebilir. 
+Yukarıdaki komut ile servisleri başlattıktan sonra, index yeniden oluşmaya başlayacak. Bu işlem veri boyutuna göre bir kaç saat sürebilir. 
 
 Aşağıdaki komutta indexing durumunu kontrol edebilirsiniz. Durum healty olduktan sonra 3. adıma geçebilirsiniz.
 Get-MailboxDatabaseCopyStatus * | Sort Name | Select Name, Status, ContentIndexState
@@ -105,6 +107,8 @@ RemoteServer : mail.domain.com
 7) Migrate işlemlerini 2 şekilde başlatabilirsiniz. Ya EXO Admin Center üzerinden ya da EXO'ye powershell ile bağlanıp komut satırı ile. 
 Ben ikisine de örnek vereceğim;
 
+EXO admin center:
+
 - Migration Path
 Give migration batch a unique name: migration job için bir isim girin
 Select the mailbox migration path: Migration ton Exchange Online (EXO)
@@ -115,15 +119,15 @@ Remote Move Migration
 - Set a migration endpoint: Hybrid Migration Endpoint - EWS (Default Web Site)
 
 - Add users
-Manually add users to migrate: Burada en küçük posta kutusu boyutuna sahip olan hesap ile denemelere başlayabilirsiniz. Benim önerim önce boş/yeni bir posta hesabı açıp onunla deneme yapmanız. Her şey yolunda ise gerçek kullanıcılarla devam edebiliriniz. Basitçe on premise üzerinde Get-Mailbox komutu ile mailbox boyutlarını görebilirsiniz. Eğer çoklu taşıma yapmak isterseniz csv dosyasına mail hesaplarını yazarak aynı anda birden fazla aktarım yapabilirsiniz. Fakat hesap çok fazla değil ise ben tek tek yapma taraftarıyım. Çünkü bir anda on premise sunucusuna yüklenirseniz, disk yavaşladığı için zaten işlemleri ya yavaş yapıyor ya da bazı işlemleri kuyrukta bekletiyor.
+Manually add users to migrate: Burada en küçük posta kutusu boyutuna sahip olan hesap ile denemelere başlayabilirsiniz. Benim önerim önce boş/yeni bir posta hesabı açıp onunla deneme yapmanız. Her şey yolunda ise gerçek kullanıcılarla devam edebiliriniz. Basitçe on premise üzerinde Get-Mailbox komutu ile mailbox boyutlarını görebilirsiniz. Eğer çoklu taşıma yapmak isterseniz csv dosyasına mail hesaplarını yazarak aynı anda birden fazla aktarım yapabilirsiniz. Fakat hesap çok fazla değil ise ben tek tek yapma taraftarıyım. Çünkü bir anda on premise sunucusuna yüklenirseniz, disk yavaşladığı için zaten işlemleri ya yavaş yapıyor ya da bazı işlemleri kuyrukta bekletiyor. Benim gördüğüm 200mbit/sn ile taşımak ideal.
 
 - Configuration
-Target delivery domain: domain_adi.mail.onmicrosoft.com
+Target delivery domain: domain.mail.onmicrosoft.com
 
 - Schedule batch migration
 Burada işlemi hemen başlatabilir ya da istediğiniz bir tarih/saat için planlayabilirsiniz.
 
-EXO Power Shell üzerinden migration başlatmak isterseniz;
+EXO Power Shell üzerinden migration başlatmak isterseniz:
 
 New-MoveRequest -Identity "user@domain.com.tr" -Remote -RemoteHostName "7436112b-b224-4f99-8134-ba8ea4033946.resource.mailboxmigration.his.msappproxy.net" -TargetDeliveryDomain "domain_adi.mail.onmicrosoft.com" -RemoteCredential (Get-Credential Administrator@domain.com)
 
@@ -145,13 +149,14 @@ Get-MigrationUser | Get-MigrationUserStatistics | Where-Object {$_.Status -notli
 
 Migration işlemi completed olduğunda, örneğin mailbox üzerinde 200k item var ise, bazen 3-4 item aktarılamıyor. Bu nedenme migration status approve skipped items'e düşüyor. Bu migrasyon işlemini manual tanımlamak için exo powershell de Set-MigrationUser -ApproveSkippedItems komutu ve arından Identity sorduğunda email adresini yazarak taşımayı tamamlayabiliriz.
 
-Taşıma tamamlandıktan sonra, Exchange On Premise üzerinde bu kullanıcı artık 0365 olarak gözükecek.
+Taşıma tamamlandıktan sonra, Exchange On Premise üzerinde bu kullanıcı artık O365 olarak gözükecek.
 
 10) Tüm kullanıcılara Microsoft Admin Center üzerinden lisanslarını tanımlayın. 
-11) EXO üzerinde Directory Synchronization kaparak, tüm kullanıcıları cloud user'a çeviriyoruz.
-12) Exchange On Premise devre dışı bırakılması: https://learn.microsoft.com/en-us/exchange/decommission-on-premises-exchange
+11) EXO üzerinde Directory Synchronization kapatarak, tüm kullanıcıları cloud user'a çeviriyoruz.
 
 EXO Power Shell üzerinde: Set-MsolDirSyncEnabled -EnableDirSync $false
+
+12) Exchange On Premise devre dışı bırakılması: https://learn.microsoft.com/en-us/exchange/decommission-on-premises-exchange
 
 Sorular:
 
