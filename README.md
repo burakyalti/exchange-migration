@@ -7,9 +7,11 @@ Tanım: Exchange 2013 On Premise altyapısında barınan hesapların (mail, arş
 
 Bu aşamadan sonra lokal sunucu: on premise, remote sunucu exo olarak adlandırılacaktır.
 
+Hybrid nedir? Hybrid aslında bazı kullanıcıların On Premise üzerinde bazılarının ise EXO üzerinde aynı anda çalışabildiği ortak bir mimari.
+
 Sabırsızlar için özet adımlar
 
-- Microsoft 365 tarafında alan adınızı doğrulayın.
+- Microsoft 365 tarafında alan adınızı doğrulayın. **
 - Exchange on premise admin center üzerinde, hybrid menüsünden hybrid ayarlarınızı yapın ve on premise <-> exo arasındaki bağlantıyı sağlayın. (Ben SSL v.b. hatalarla uğraşmamak için full hybrid modu ile kurulum yaptım.)
 - Hybrid kurulumunda sizden Active Directory Senkronizasyonu yapmak için Azure AD Connect yazılımı ile local AD üzerindeki kullanıcılarınızı Azure AD üzerine senkronize etmenizi isteyecek. Bu adımı dikkatlice yapıp, işlemin hatasız tamamlandığına emin olmadan diğer adımlara geçmeyin. Azure portal üzerinden kontrol ederek, tüm kullanıcılarınızın senkronize edildiğine emin olun.
 - EXO Admin Center üzerinden, migration menüsüne gelin ve remote move seçeneği ile mail hesaplarını migrate etmeye başlayın. Migration end point yada migrate edilecek kullanıcılar karşınıza gelemzse bir yerde hatanız var demektir.
@@ -139,7 +141,9 @@ Migration işlemi completed olduğunda, örneğin mailbox üzerinde 200k item va
 
 Taşıma tamamlandıktan sonra, Exchange On Premise üzerinde bu kullanıcı artık 0365 olarak gözükecek.
 
+** MX sorunsalı hakkında.
 
+Diğer firmalar nasıl yapıyor bilemiyorum fakat domain doğrulamada şöyle bir sorun yaşadık. EXO tarafında domaini eklemek için MX kaydının EXO ya yönlendirilmesini istiyordu. Fakat henüz on premise <-> exo arasındaki köprüyü kurmamıştık. Bu nedenle gece mail trafiğinin çok az olduğu bir saatte kısa süreli MX leri EXO ya çevirip domaini doğrulattık. Sonra MX leri eski haline aldık. Daha sonra isterseniz hybrid configuration yaptıktan sonra ya da tüm migration süreçleri bittikten sonra MX leri çevirebilirsiniz.
 
 
 
