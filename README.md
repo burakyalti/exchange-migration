@@ -123,6 +123,12 @@ Target delivery domain: domain_adi.mail.onmicrosoft.com
 - Schedule batch migration
 Burada işlemi hemen başlatabilir ya da istediğiniz bir tarih/saat için planlayabilirsiniz.
 
+EXO Power Shell üzerinden migration başlatmak isterseniz;
+
+New-MoveRequest -Identity "user@domain.com.tr" -Remote -RemoteHostName "7436112b-b224-4f99-8134-ba8ea4033946.resource.mailboxmigration.his.msappproxy.net" -TargetDeliveryDomain "domain_adi.mail.onmicrosoft.com" -RemoteCredential (Get-Credential Administrator@domain.com)
+
+Not: Powershell ile başlattığınız migration işlemleri admin panelde gözükmez. Sadece powershell komutları ile migration durumunu takip edebilirsiniz.
+
 8) Migrate işlemlerinin durumunun takip edilmesi
 
 Burada iki farklı komut ile migration durumunu takip edebilirsiniz.
@@ -141,10 +147,20 @@ Migration işlemi completed olduğunda, örneğin mailbox üzerinde 200k item va
 
 Taşıma tamamlandıktan sonra, Exchange On Premise üzerinde bu kullanıcı artık 0365 olarak gözükecek.
 
-** MX sorunsalı hakkında.
+10) Tüm kullanıcılara Microsoft Admin Center üzerinden lisanslarını tanımlayın. 
+11) EXO üzerinde Directory Synchronization kaparak, tüm kullanıcıları cloud user'a çeviriyoruz.
+12) Exchange On Premise devre dışı bırakılması: https://learn.microsoft.com/en-us/exchange/decommission-on-premises-exchange
+
+EXO Power Shell üzerinde: Set-MsolDirSyncEnabled -EnableDirSync $false
+
+Sorular:
+
+1) MX kayıtlarını ne zaman değiştirmeliyim? **
 
 Diğer firmalar nasıl yapıyor bilemiyorum fakat domain doğrulamada şöyle bir sorun yaşadık. EXO tarafında domaini eklemek için MX kaydının EXO ya yönlendirilmesini istiyordu. Fakat henüz on premise <-> exo arasındaki köprüyü kurmamıştık. Bu nedenle gece mail trafiğinin çok az olduğu bir saatte kısa süreli MX leri EXO ya çevirip domaini doğrulattık. Sonra MX leri eski haline aldık. Daha sonra isterseniz hybrid configuration yaptıktan sonra ya da tüm migration süreçleri bittikten sonra MX leri çevirebilirsiniz.
 
+2) Hem Exchange On Premise hem de EXO üzerinde mail trafiği nasıl çalışıyor?
+Hybrid configuration yapıldığında, hem on premise hem de exo tarafında Mail Flow -> Connectors bölümünde inbound ve outbound connectorler görecelsiniz. Bunlar geçiş sürecinde mail trafiğini yönetiyorlar.
 
 
 
