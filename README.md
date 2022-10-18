@@ -94,6 +94,7 @@ Bu aşamadan sonra exchange on premise üzerinde pek bir işlem kalmadı.
 7) EXO üzerine powercli ile bağlanma
 
 PowerShell ile connect-exo.ps1 dosyasını çalıştırın ve exo kullanıcı adı ve şifrenizi girin.
+
 Get-MigrationEndpoint | Format-List Identity, RemoteServer komutu ile hybrid configuration ayarlarınızı teyit edin. 
 
 Aşağıdaki gibi bir çıktı aldıysanız, köprü kurulmuş demektir.
