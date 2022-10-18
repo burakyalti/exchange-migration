@@ -28,8 +28,16 @@ Hala bağlantı sağlayamıyor iseniz, PowerShell üzerinden bağlanmayı deneyi
 
 Sağlıklı bir taşıma yapabilmek için, on premise exchange sunucusunun da sağlıklı olması gerekiyor. 
 
-1) Exchange On Premise üzerinde Content Indexing sağlıklı durumda mı?
+1) Exchange On Premise tüm güncellemelerine sahip olduğunuza emin olun.
+
+Get-ExchangeServer | Format-Table Name, Edition, AdminDisplayVersion komutu ile güncel versiyonu kontrol edebilirsiniz.
+
+2) Exchange On Premise üzerinde 25 ve 443 portlarının firewallda açık olduğuna emin olun.
+
+3) Exchange On Premise üzerinde Content Indexing sağlıklı durumda mı?
+
 on premise'e exchange management shell ile bağlantı sağlayın
+
 Get-MailboxDatabaseCopyStatus * | Sort Name | Select Name, Status, ContentIndexState
 Bu komutun çıktısında ContentIndexState Healty yazması gerekmektedir.
 Healty olanlar bir sonraki adıma geçebilir. Healty olmayanlar;
@@ -44,7 +52,29 @@ Servisleri başlatın: Get-Service -Name "HostControllerService","MSExchangeFast
 
 Yukarıdaki komut ile servisleri başlattıktan sonra, index yeniden oluşmaya başlayacak. Bu veri boyutuna göre bir kaç saat sürebilir. 
 
-Aşağıdaki komutta indexing durumunu kontrol edebilirsiniz. Durum healty olduktan sonra 2. adıma geçebilirsiniz.
+Aşağıdaki komutta indexing durumunu kontrol edebilirsiniz. Durum healty olduktan sonra 3. adıma geçebilirsiniz.
 Get-MailboxDatabaseCopyStatus * | Sort Name | Select Name, Status, ContentIndexState
 
-2) 
+4) MRS Proxy yi aktif edin
+
+Get-WebServicesVirtualDirectory | Format-Table Server,MRS*
+
+Server    MRSProxyEnabled
+------    ---------------
+EXCH-2013           False
+
+Get-WebServicesVirtualDirectory -ADPropertiesOnly | Where {$_.MRSProxyEnabled -ne $true} | Set-WebServicesVirtualDirectory -MRSProxyEnabled $true komutu ile enable edebilirsiniz.
+
+Eğer GUI üzerinden aktif etmek isterseniz, on premise admin center -> servers -> virtual directories > edit -> general  "Enable MRS Proxy Endpoint" kutusunu işaretleyin.
+
+Önemli: Burada external/internal URL bölümünde yazan URL lerinde geçerli bir SSL sertifikası olması gerekmektedir.
+
+5) Hybrid configuration
+
+Dilerseniz on premise admin center daki hybrid menüsünden ya da https://aka.ms/HybridWizard adreesini ziyaret ederek Hybrid Configuration Wizard'ı indirin ve yükleyin. Bu aşamada Exchange On Premise <-> Exchange Online arasındaki köprüyü kuruyor olacağız.
+On Premise ve EXO login bilgilerinizi yazarak devam edin. 
+Full Hybrid Configuration ve Organization Configuration Transfer seçeneklerini seçerek devam edin.
+Exchange Classic Topology seçip kurulumu bitiriyoruz. 
+Kurulum sonunda bir hata vermediyse işin %80'i bitti demektir.
+
+6) EXO üzerine powercli ile bağlanma
