@@ -104,7 +104,9 @@ RemoteServer : 7436112b-b224-4f99-8134-ba8ea4033946.resource.mailboxmigration.hi
 Identity     : mail.domain.com
 RemoteServer : mail.domain.com
 
-7) Migrate işlemlerini 2 şekilde başlatabilirsiniz. Ya EXO Admin Center üzerinden ya da EXO'ye powershell ile bağlanıp komut satırı ile. 
+7) Migrate işlemlerini 2 şekilde başlatabilirsiniz. 
+
+Ya EXO Admin Center üzerinden ya da EXO'ye powershell ile bağlanıp komut satırı ile. 
 Ben ikisine de örnek vereceğim;
 
 EXO admin center:
@@ -165,6 +167,7 @@ Sorular:
 Diğer firmalar nasıl yapıyor bilemiyorum fakat domain doğrulamada şöyle bir sorun yaşadık. EXO tarafında domaini eklemek için MX kaydının EXO ya yönlendirilmesini istiyordu. Fakat henüz on premise <-> exo arasındaki köprüyü kurmamıştık. Bu nedenle gece mail trafiğinin çok az olduğu bir saatte kısa süreli MX leri EXO ya çevirip domaini doğrulattık. Sonra MX leri eski haline aldık. Daha sonra isterseniz hybrid configuration yaptıktan sonra ya da tüm migration süreçleri bittikten sonra MX leri çevirebilirsiniz.
 
 2) Hem Exchange On Premise hem de EXO üzerinde mail trafiği nasıl çalışıyor?
+
 Hybrid configuration yapıldığında, hem on premise hem de exo tarafında Mail Flow -> Connectors bölümünde inbound ve outbound connectorler görecelsiniz. Bunlar geçiş sürecinde mail trafiğini yönetiyorlar.
 
 
